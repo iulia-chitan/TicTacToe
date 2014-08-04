@@ -1,0 +1,134 @@
+<script type="text/javascript">
+  function removeAnswerField(id) {
+    new Ajax.Request("<%= delete_question_answer_enterprise_admin_index_path%>", {
+            method:'delete',
+            confirm: 'Are you sure?',
+            parameters:"answer_id="+ id
+
+    });
+
+  }
+  
+  function removeNewAnswerField(el) {
+    var parElem = el.up('li');
+    //console.log(parElem);
+    parElem.remove();
+  }
+
+  function checkRadios(el){
+    var radios = $$(".radios");
+    console.log(el.next());
+    if(el.checked) {
+      for(x=0;x<radios.length;x++) {
+        radios[x].checked = true;
+        radios[x].value = 1;
+        radios[x].next().value = 1;
+        console.log(radios[x].next());
+      }
+      el.checked = false;
+      el.value = 0;
+      el.next().value = 0;
+    }
+    if(!el.checked){
+      for(x=0;x<radios.length;x++) {
+        radios[x].checked = false;
+        radios[x].value = 0;
+        radios[x].next().value = 0;
+      }
+      el.checked = true;
+      el.value = 1;
+      el.next().value = 1;
+    }
+  }
+
+  function removeTrailingSpaces(){
+    var text = $('course_question_body').value ;
+    var replacedText = text.replace(/\t/g, ' ').replace(/\n/g, ' ').replace(/^\s+|\s+$/g,'');
+    $('course_question_body').innerHTML = replacedText;
+      
+
+    if($$('.radios').size() != 0){
+
+        if ($$('.tfOne input:checked').length == 0){
+            alert("You haven't selected any correct answers!");
+            Event.stop();
+
+        }
+
+
+
+    }
+
+  }
+</script>
+<% method = @question.id.nil? ? 'post' : 'put' %>
+
+<%= form_for @question, :url => url, :method => method, :id => 'assessForm' do |f|%>
+
+	<input type='hidden' name='course_question[question_type]' value='<%= @type %>'/>
+	<input type='hidden' name='course_question[course_id]' value='<%= @course_id %>'/>
+	<input type='hidden' name='course_question[q_number]' value='<%= @idx %>'/>
+	<h3 class="highlightHead">True or false</h3>
+
+	<div class="grid_8 alpha">
+		<div class="genForm assessForm">
+			<ol>
+				<li>
+					<label for="">Question *</label>
+					<textarea name="course_question[body]" id="course_question_body" class="bgFull txt" required="true"><%= @question.body unless @question.id.nil?%></textarea>
+				</li>
+				<li class="cnt tSpaced clearfix">
+					<div class="floatRight tfOne rightAlign">
+						Correct answer *
+					</div>
+					<h4 class="tight">Answers</h4>
+				</li>
+
+				<% @answers.each_with_index do |answer, idx|%>
+					<%= f.fields_for :question_answers, answer do |answer_form| %>
+						
+						<li class="cnt clearfix">
+							<div class="tfOne floatRight lightPanel lightPanelFlat bb centered">
+								<% is_correct = answer.is_correct? ?  1 : 0 %>
+                                <%options =  answer.is_correct? ? {class:"radios", onclick: "checkRadios(this);", checked: "checked"} : {class:"radios", onclick: "checkRadios(this);"}%>
+                               
+                                <%= radio_button_tag "is_correct", is_correct, nil, options %>
+
+
+                                
+                                <%= answer_form.hidden_field :is_correct, :value => is_correct %>
+							</div>				
+							<div class="row type1">
+								<label for="">Answer <%=idx+1%>*</label>
+                             
+								 <%= answer_form.text_field :body, class:"txt", required: true %>
+
+								
+							</div>
+						</li>
+
+
+	                                   
+	                <% end %>
+				<% end %>
+				
+
+				<li class="cnt">
+					<h4 class="tight tSpaced">Feedback</h4>
+				</li>
+				<li class="assessForm">
+					<label for="">Feedback if question is answered correctly</label>
+					<%=f.text_area :feedback_correct,  class:"bgFull txt"%>
+				
+				</li>
+				<li class="assessForm">
+					<label for="">Feedback if question is answered incorrectly</label>
+					<%=f.text_area :feedback_wrong,  class:"bgFull txt"%>
+					
+				</li>			
+			</ol>
+		</div>
+		<button type="submit" onclick="removeTrailingSpaces();">Done</button>
+		<%= link_to "Cancel", {controller: 'enterprise_admin', action: 'new_assessment', course_id: @course.id}, class: 'button' %>  
+	</div>
+<%end%>
