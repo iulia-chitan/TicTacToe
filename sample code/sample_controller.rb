@@ -5,12 +5,6 @@ class DevelopmentController < ApplicationController
 
   require 'csv'
 
-  
-  before_filter :check_courses_enabled, only:['assign_more_courses']
-
-  skip_filter :authorize,              only:['badge_for_share', 'course_for_share', 'track_for_share']
-  skip_filter :check_setup,            only:[ 'badge_for_share', 'course_for_share', 'track_for_share']
-  
   layout 'private'
 
   def index
@@ -77,21 +71,7 @@ class DevelopmentController < ApplicationController
     redirect_to action: action_name
   end
 
-  def assign_more_courses
-    unless @user.can_get_courses?
-      flash[:error] = 'You have to complete all your courses before asking for a new set!'
-      redirect_to action:'index'
-    else
-     @courses = NewAbilitySet.next_set_of_courses(@user)
-     callback_url =  url_for(:only_path => false, :action => 'cloud_callback', :controller => 'development')
-     @courses.each do |course|
-       course.delay.assign_to @user, callback_url
-     end
-     
-     redirect_to action:'stand_by_for_courses'
-    end
-
-  end
+  
 
   private
   
